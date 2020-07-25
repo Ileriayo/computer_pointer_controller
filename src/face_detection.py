@@ -69,7 +69,8 @@ class FaceDetection:
         if self.wait() == 0:
             outputs = self.get_outputs()
             image = self.preprocess_output(outputs, image)
-        # cv2.imwrite('cropped_face.jpg', image)
+        # cv2.imwrite('../images/outputs/cropped_face.jpg', image)
+        return image
 
     def preprocess_input(self, image):
         '''

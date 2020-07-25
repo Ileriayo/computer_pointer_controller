@@ -64,14 +64,15 @@ class FacialLandmarks:
         This method is meant for running predictions on the input image.
         '''
         p_image = self.preprocess_input(image)
-        # cv2.imwrite('output.jpg', image)
+
         self.exec_network.start_async(0, {self.input_name: p_image})
         
         if self.wait() == 0:
             outputs = self.get_outputs()
-            eye_coords = self.preprocess_output(outputs, image)
-            print(eye_coords)
-            # return self.draw_output(coords, image)
+            left_eye, right_eye = self.preprocess_output(outputs, image)
+        # cv2.imwrite('../images/outputs/left_eye.jpg', left_eye)
+        # cv2.imwrite('../images/outputs/right_eye.jpg', right_eye)
+        return left_eye, right_eye
 
     def preprocess_input(self, image):
         '''
@@ -99,12 +100,30 @@ class FacialLandmarks:
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        left_x = outputs[0][0] * image.shape[1]
-        left_y = outputs[0][1] * image.shape[0]
-        right_x = outputs[0][2] * image.shape[1]
-        right_y = outputs[0][3] * image.shape[0]
+        # denormalize detections
+        xl = int(outputs[0][0][0] * image.shape[1])
+        yl = int(outputs[0][1][0] * image.shape[0])
+        xr = int(outputs[0][2][0] * image.shape[1])
+        yr = int(outputs[0][3][0] * image.shape[0])
 
-        return {
-            'left_eye': [left_x, left_y],
-            'right_eye': [right_x, right_y]
-        }
+        # include offset for left eye
+        xlmin = xl - 15
+        ylmin = yl - 15
+        xlmax = xl + 15
+        ylmax = yl + 15
+
+        # include offset for right eye
+        xrmin = xr - 15
+        yrmin = yr - 15
+        xrmax = xr + 15
+        yrmax = yr + 15
+
+        # draw boxes around eyes
+        # cv2.rectangle(image, (xlmin, ylmin), (xlmax, ylmax), (0, 0, 255), 1)
+        # cv2.rectangle(image, (xrmin, yrmin), (xrmax, yrmax), (0, 0, 255), 1)
+
+        # crop eyes
+        eye_l = image[ylmin:ylmax, xlmin:xlmax]
+        eye_r = image[yrmin:yrmax, xrmin:xrmax]
+
+        return eye_l, eye_r
