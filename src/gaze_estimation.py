@@ -5,7 +5,7 @@ import logging as log
 from openvino.inference_engine import IECore
 
 
-class HeadPoseEstimation:
+class GazeEstimation:
     '''
     Class for the Face Detection Model.
     '''
@@ -24,10 +24,10 @@ class HeadPoseEstimation:
         except Exception:
             raise ValueError("Could not Initialise the network. Have you enterred the correct model path?")
 
-        self.input_name=next(iter(self.model.inputs))
-        self.input_shape=self.model.inputs[self.input_name].shape
+        # model has more than one input, get the shape of left_eye_image
+        self.input_name=[i for i in self.model.inputs.keys()]
+        self.input_shape=self.model.inputs[self.input_name[1]].shape
         self.output_name=next(iter(self.model.outputs))
-        # self.output_shape=self.model.outputs[self.output_name].shape
 
     def load_model(self):
         '''
@@ -58,24 +58,30 @@ class HeadPoseEstimation:
 
         return self.exec_network
 
-    def predict(self, image):
+    def predict(self, eye_l, eye_r, head_pose):
         '''
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        p_image = self.preprocess_input(image)
+        p_eye_l = self.preprocess_input(eye_l)
+        p_eye_r = self.preprocess_input(eye_r)
 
-        self.exec_network.start_async(0, {self.input_name: p_image})
+        self.exec_network.start_async(0, {
+            'left_eye_image': p_eye_l,
+            'right_eye_image': p_eye_r,
+            'head_pose_angles': head_pose
+        })
         
         if self.wait() == 0:
             outputs = self.get_outputs()
-        return self.preprocess_output(outputs, image)
+        return self.preprocess_output(outputs) 
 
     def preprocess_input(self, image):
         '''
         Before feeding the data into the model for inference,
         you might have to preprocess it. This function is where you can do that.
         '''
+        # same dimension for both eyes
         required_width = self.input_shape[2]
         required_height = self.input_shape[3]
         dimension = (required_height, required_width)
@@ -83,6 +89,7 @@ class HeadPoseEstimation:
         image = cv2.resize(image, dimension)
         image = image.transpose((2,0,1))
         image = image.reshape(1, *image.shape)
+
         return image
 
     def wait(self):
@@ -90,20 +97,13 @@ class HeadPoseEstimation:
         return status
 
     def get_outputs(self):
-        return self.exec_network.requests[0].outputs
+        return self.exec_network.requests[0].outputs[self.output_name]
 
-    def preprocess_output(self, outputs, image):
+    def preprocess_output(self, outputs):
         '''
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        yaw = outputs['angle_y_fc'][0][0]
-        pitch = outputs['angle_p_fc'][0][0]
-        roll = outputs['angle_r_fc'][0][0]
-        
-        # cv2.putText(image, "Yaw:{:.2f}".format(yaw), (10,20), cv2.FONT_HERSHEY_COMPLEX, 1, (2550, 0, 0),1)
-        # cv2.putText(image, "Pitch:{:.2f}".format(pitch), (10,50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0),1)
-        # cv2.putText(image, "Roll:{:.2f}".format(roll), (10,80), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0),1)
-        # cv2.imwrite('../images/outputs/head_pose.jpg', image)
-        
-        return yaw, pitch, roll
+        x_coord = outputs[0][0]
+        y_coord = outputs[0][1]
+        return x_coord, y_coord
