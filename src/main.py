@@ -34,7 +34,7 @@ def build_argparser():
     return parser
 
 def pipeline(args):
-    feed=InputFeeder(input_type='video', input_file=input_stream)
+    feed=InputFeeder(input_file=input_stream)
     feed.load_data()
 
     FaceDetectionPipe = FaceDetection(args.m_fd, args.d, args.cpu_ext)

@@ -7,11 +7,12 @@ Sample usage:
         do_something(batch)
     feed.close()
 '''
+import logging as log
 import cv2
 from numpy import ndarray
 
 class InputFeeder:
-    def __init__(self, input_type, input_file=None):
+    def __init__(self, input_type=None, input_file=None):
         '''
         input_type: str, The type of input. Can be 'video' for video file, 'image' for image file,
                     or 'cam' to use webcam feed.
@@ -21,7 +22,19 @@ class InputFeeder:
         if input_type=='video' or input_type=='image':
             self.input_file=input_file
     
+    def get_input_type(self):
+        img_extension = ['.png', '.bmp', '.jpg', '.jpeg', 'tif']
+        vid_extension = ['.mp4']
+        if self.input_file.lower() == 'cam':
+            self.input_type = 'cam'
+        elif input_file.split('.')[-1].lower() in img_extension:
+            self.input_type = 'image'
+        elif input_file.split('.')[-1].lower() in vid_extension:
+            self.input_type = 'video'
+        return
+
     def load_data(self):
+        self.get_input_type()
         if self.input_type=='video':
             self.cap=cv2.VideoCapture(self.input_file)
         elif self.input_type=='cam':
