@@ -1,9 +1,10 @@
 import os
 import sys
 import cv2
-import logging as log
+import logging
 from openvino.inference_engine import IECore
 
+log = logging.getLogger(__name__)
 
 class GazeEstimation:
     '''

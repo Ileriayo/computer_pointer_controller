@@ -1,7 +1,7 @@
 import os
 import sys
 import cv2
-import logging as log
+import logging
 from argparse import ArgumentParser
 from openvino.inference_engine import IECore
 
@@ -11,6 +11,7 @@ from facial_landmarks_detection import FacialLandmarks
 from head_pose_estimation import HeadPoseEstimation
 from gaze_estimation import GazeEstimation
 
+log = logging.getLogger(__name__)
 
 m_fd = '../models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001'
 m_hpe = '../models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001'
@@ -58,6 +59,7 @@ def pipeline(args):
 
 
 def main():
+    logging.basicConfig(level = logging.INFO)
     args = build_argparser().parse_args()
     pipeline(args)
 

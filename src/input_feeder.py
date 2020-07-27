@@ -8,9 +8,11 @@ Sample usage:
     feed.close()
 '''
 import os
-import logging as log
 import cv2
 from numpy import ndarray
+import logging
+
+log = logging.getLogger(__name__)
 
 class InputFeeder:
     def __init__(self, input_file, input_type=None):
@@ -32,6 +34,7 @@ class InputFeeder:
             self.input_type = 'image'
         elif os.path.splitext(self.input_file)[-1] in vid_extension:
             self.input_type = 'video'
+        log.info('Detected input type: ' + self.input_type)
 
     def load_data(self):
         if self.input_type=='video':
