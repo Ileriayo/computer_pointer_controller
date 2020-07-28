@@ -10,6 +10,7 @@ from face_detection import FaceDetection
 from facial_landmarks_detection import FacialLandmarks
 from head_pose_estimation import HeadPoseEstimation
 from gaze_estimation import GazeEstimation
+from mouse_controller import MouseController
 
 log = logging.getLogger(__name__)
 
@@ -29,13 +30,13 @@ def build_argparser():
     parser.add_argument("-m_hpe", type=str, default=m_hpe, help="Path to a trained model for head pose estimation")
     parser.add_argument("-m_ld", type=str, default=m_ld, help="Path to a trained model for facial landmark detection")
     parser.add_argument("-m_ge", type=str, default=m_ge, help="Path to a trained model for gaze estimation")
-    parser.add_argument("-i", type=str, help="Path to image or video file")
+    parser.add_argument("-i", type=str, default=input_stream, help="Path to image or video file")
     parser.add_argument("-cpu_ext", required=False, type=str, default=None, help="MKLDNN (CPU)-targeted custom layers. Absolute path to a shared library with the kernels impl.")
     parser.add_argument("-d", type=str, default="CPU", help="Specify the target device to infer on: CPU, GPU, FPGA or MYRIAD is acceptable. Sample will look for a suitable plugin for device specified (CPU by default)")
     return parser
 
 def pipeline(args):
-    feed=InputFeeder(input_stream)
+    feed=InputFeeder(args.i)
     feed.load_data()
 
     FaceDetectionPipe = FaceDetection(args.m_fd, args.d, args.cpu_ext)
@@ -51,10 +52,21 @@ def pipeline(args):
     GazeEstimationPipe.load_model()
 
     for frame in feed.next_batch():
+        if frame is None:
+            break
+
         face_detection_output = FaceDetectionPipe.predict(frame)
         eye_l_image, eye_r_image = FacialLandmarksPipe.predict(face_detection_output)
         yaw, pitch, roll = HeadPoseEstimationPipe.predict(face_detection_output)
-        GazeEstimationPipe.predict(eye_l_image, eye_r_image, [yaw, pitch, roll])
+        x_coord, y_coord = GazeEstimationPipe.predict(eye_l_image, eye_r_image, [yaw, pitch, roll])
+
+        if cv2.waitKey(1) & 0xFF == ord('q'): 
+            break
+        
+        cv2.imshow('Frame', cv2.resize(frame, (600, 400)))
+
+        pointer = MouseController('high', 'fast')
+        pointer.move(x_coord, y_coord)
     feed.close()
 
 

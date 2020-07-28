@@ -62,4 +62,5 @@ class InputFeeder:
         if not self.input_type=='image':
             self.cap.release()
         cv2.destroyAllWindows()
+        log.info('End of feed')
 
