@@ -27,14 +27,16 @@ def build_argparser():
     Parse command line arguments.
     :return: command line arguments
     '''
-    parser = ArgumentParser()
-    parser.add_argument('-m_fd', type=str, default=m_fd, help='Path to a trained model for face detection')
-    parser.add_argument('-m_hpe', type=str, default=m_hpe, help='Path to a trained model for head pose estimation')
-    parser.add_argument('-m_ld', type=str, default=m_ld, help='Path to a trained model for facial landmark detection')
-    parser.add_argument('-m_ge', type=str, default=m_ge, help='Path to a trained model for gaze estimation')
-    parser.add_argument('-i', type=str, default=input_stream, help='Path to image or video file')
-    parser.add_argument('-cpu_ext', required=False, type=str, default=None, help='MKLDNN (CPU)-targeted custom layers. Absolute path to a shared library with the kernels impl.')
-    parser.add_argument('-d', type=str, default='CPU', help='Specify the target device to infer on: CPU, GPU, FPGA or MYRIAD is acceptable. Sample will look for a suitable plugin for device specified (CPU by default)')
+    parser = ArgumentParser(description = 'Computer Pointer Controller')
+    required = parser.add_argument_group('required arguments')
+
+    required.add_argument('-m_fd', type=str, required=True, default=m_fd, help='Path to a trained model for face detection')
+    required.add_argument('-m_hpe', type=str, required=True, default=m_hpe, help='Path to a trained model for head pose estimation')
+    required.add_argument('-m_ld', type=str, required=True, default=m_ld, help='Path to a trained model for facial landmark detection')
+    required.add_argument('-m_ge', type=str, required=True, default=m_ge, help='Path to a trained model for gaze estimation')
+    required.add_argument('-i', type=str, required=True, default=input_stream, help='Path to image or video file')
+    required.add_argument('-d', type=str, required=True, default='CPU', help='Specify the target device to infer on: CPU, GPU, FPGA or MYRIAD is acceptable. Sample will look for a suitable plugin for device specified (CPU by default)')
+    parser.add_argument('-cpu_ext', type=str, default=None, help='MKLDNN (CPU)-targeted custom layers. Absolute path to a shared library with the kernels impl.')
     return parser
 
 def pipeline(args):
