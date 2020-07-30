@@ -23,6 +23,7 @@ model_precision_fd = 'FP32-INT1'
 # model_precision = 'FP16-INT8'
 model_precision = 'FP32'
 
+# Default path for models (for ease of testing in development)
 m_fd = '../models/intel/face-detection-adas-binary-0001/' + model_precision_fd +'/face-detection-adas-binary-0001'
 m_hpe = '../models/intel/head-pose-estimation-adas-0001/' + model_precision + '/head-pose-estimation-adas-0001'
 m_ld = '../models/intel/landmarks-regression-retail-0009/' + model_precision + '/landmarks-regression-retail-0009'
@@ -85,57 +86,61 @@ def pipeline(args):
         if frame is None:
             break
 
+        if cv2.waitKey(1) & 0xFF == ord('q'): 
+            break
+
         frame_count += 1
         inf_time = time.time()
         fd_img_output, fd_coords = FaceDetectionPipe.predict(frame)
         inf_time_fd = time.time() - inf_time
 
-        inf_time = time.time()
-        eye_l_image, eye_r_image, ld_coords = FacialLandmarksPipe.predict(fd_img_output)
-        inf_time_ld = time.time() - inf_time
+        if (fd_coords == []):
+            log.info('No face detected')
+        else:
+            inf_time = time.time()
+            eye_l_image, eye_r_image, ld_coords = FacialLandmarksPipe.predict(fd_img_output)
+            inf_time_ld = time.time() - inf_time
 
-        inf_time = time.time()
-        hpe_output = HeadPoseEstimationPipe.predict(fd_img_output)
-        inf_time_hpe = time.time() - inf_time
+            inf_time = time.time()
+            hpe_output = HeadPoseEstimationPipe.predict(fd_img_output)
+            inf_time_hpe = time.time() - inf_time
 
-        yaw, pitch, roll = hpe_output
-        inf_time = time.time()
-        ge_output = GazeEstimationPipe.predict(eye_l_image, eye_r_image, [yaw, pitch, roll])
-        inf_time_ge = time.time() - inf_time
+            yaw, pitch, roll = hpe_output
+            inf_time = time.time()
+            ge_output = GazeEstimationPipe.predict(eye_l_image, eye_r_image, [yaw, pitch, roll])
+            inf_time_ge = time.time() - inf_time
 
-        if cv2.waitKey(1) & 0xFF == ord('q'): 
-            break
+            if frame_count % 5 == 0:
+                pointer = MouseController('medium', 'fast')
+                pointer.move(ge_output[0], ge_output[1])
+
+            fps_fd = 1 / inf_time_fd
+            fps_ld = 1 / inf_time_ld
+            fps_hpe = 1 / inf_time_hpe
+            fps_ge = 1 / inf_time_ge
         
-        if (args.v):
-            v = Visualizer(frame, fd_img_output, fd_coords, ld_coords, hpe_output)
-            v.visualize()
+            if (args.v):
+                v = Visualizer(frame, fd_img_output, fd_coords, ld_coords, hpe_output)
+                v.visualize()
 
-        if frame_count % 5 == 0:
-            pointer = MouseController('medium', 'fast')
-            pointer.move(ge_output[0], ge_output[1])
+            log.info('Average inference time for face detection model: ' + str(inf_time_fd))
+            log.info('Average inference time for landmark detection model: ' + str(inf_time_ld))
+            log.info('Average inference time for head pose estimation model: ' + str(inf_time_hpe))
+            log.info('Average inference time for gaze estimation model: ' + str(inf_time_ge))
 
-        fps_fd = 1 / inf_time_fd
-        fps_ld = 1 / inf_time_ld
-        fps_hpe = 1 / inf_time_hpe
-        fps_ge = 1 / inf_time_ge
+            log.info('FPS for face detection model: ' + str(fps_fd))
+            log.info('FPS for landmark detection model: ' + str(fps_ld))
+            log.info('FPS for head pose estimation model: ' + str(fps_hpe))
+            log.info('FPS for gaze estimation model: ' + str(fps_ge))
 
-        log.info('Average inference time for face detection model: ' + str(inf_time_fd))
-        log.info('Average inference time for landmark detection model: ' + str(inf_time_ld))
-        log.info('Average inference time for head pose estimation model: ' + str(inf_time_hpe))
-        log.info('Average inference time for gaze estimation model: ' + str(inf_time_ge))
+            log.info ('Frames Count:' + str(frame_count))
 
-        log.info('FPS for face detection model: ' + str(fps_fd))
-        log.info('FPS for landmark detection model: ' + str(fps_ld))
-        log.info('FPS for head pose estimation model: ' + str(fps_hpe))
-        log.info('FPS for gaze estimation model: ' + str(fps_ge))
-
-        log.info ('Frames Count:' + str(frame_count))
-
-        mm = ModelMetrics()
-        mm.save_to_file('stats_fd.txt', 'FD/' + model_precision, inf_time_fd, fps_fd, load_time_fd)
-        mm.save_to_file('stats_ld.txt', model_precision, inf_time_ld, fps_ld, load_time_ld)
-        mm.save_to_file('stats_hpe.txt', model_precision, inf_time_hpe, fps_hpe, load_time_hpe)
-        mm.save_to_file('stats_ge.txt', model_precision, inf_time_ge, fps_ge, load_time_ge)
+            mm = ModelMetrics()
+            log.info('Writing stats to file...')
+            mm.save_to_file('stats_fd.txt', 'FD/' + model_precision, inf_time_fd, fps_fd, load_time_fd)
+            mm.save_to_file('stats_ld.txt', model_precision, inf_time_ld, fps_ld, load_time_ld)
+            mm.save_to_file('stats_hpe.txt', model_precision, inf_time_hpe, fps_hpe, load_time_hpe)
+            mm.save_to_file('stats_ge.txt', model_precision, inf_time_ge, fps_ge, load_time_ge)
     feed.close()
 
 def main():
