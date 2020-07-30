@@ -4,6 +4,3 @@ src/__pycache__
 images/outputs/
 sample/
 metrics/
-
-# files
-src/model_metrics.py
