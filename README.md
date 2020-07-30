@@ -57,7 +57,7 @@ python3  <path/to/downloader.py> --name <model-name> -o models
 ```
 
 ## Demo
-Execute the `main.py` script with the required arguments.
+Navigate to the `src/` directory and execute the `main.py` script with the required arguments.
 See the [documentation](#documentation) for more info.
 ```
 python3 main.py <arguments>
@@ -74,7 +74,7 @@ python3 main.py <arguments>
 | -m_ld      | *Path to a trained model for facial landmark detection                                                          | True     |
 | -m_ge      | *Path to a trained model for gaze estimation                                                                    | True     |
 | -i         | *Path to image or video file or specify 'cam' for webcam live feed                                              | True     |
-| -d         | Target device to infer on: CPU, GPU, FPGA or MYRIAD is acceptable (CPU by default)                              | True     |
+| -d         | Target device to infer on: CPU, GPU, FPGA or MYRIAD is acceptable (CPU by default)                              | False    |
 | -pt        | Probability treshold for face detection model                                                                   | False    |
 | -v         | Visualization flag - set to no display by default, to set display frames, specify 't' or 'yes' or 'true' or '1' | False    |
 
@@ -100,22 +100,27 @@ python3 main.py <arguments>
 <table>
     <thead>
         <tr>
-            <th> Facial Landmark, Head Pose Estimation & Gaze Estimation Models </th>
+            <th colspan=3> Facial Landmark, Head Pose Estimation & Gaze Estimation Models (FP16, FP16-INT8, FP32) </th>
         </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><img src='bin/metrics/inf_time.png'/></td>
+            <td><img src='bin/metrics/load_time.png'/></td>
+            <td><img src='bin/metrics/fps.png'/></td>
+        </tr>
+    </tbody>
 </table>
-<img src='bin/metrics/inf_time.png'/>
-<img src='bin/metrics/load_time.png'/>
-<img src='bin/metrics/fps.png'/>
 
 ## Results
 From the two groups of diagrams above (three each):
 - group 1: a single model precision (FP32-INT1) of the face detection model was tested against different model precisions for the other three models in the pipeline,
 - group 2: the three remaining models were comapred with each other based on their corresponding model precisions.
 
-### Group 1
+#### Group 1
 Looking at the FP16-INT8 columns, the load time for the face detection model had the lowest inference time and highest fps. It also took the least amount of time to load the model into the Inference Engine. FP16 models store dat using half the bits required for FP32 models, hence it is no wonder that the time it takes to load them into the Inference Engine will be faster than that of FP32. Ditto for processing speed.
 
-### Group 2
+#### Group 2
 In the seccond group (the three remaining models), the model load time for the gaze estimation model appeared to be the highest out of all three. Across all model precisions, the Facial Landmark model had the least inference time, but the Gaze Estimation model seemed to have slowed down the rate at which the system carried out inference, thereby having the lowest fps.
 
 ### Edge Cases
