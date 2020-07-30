@@ -37,16 +37,15 @@ def build_argparser():
     parser = ArgumentParser(description = 'Computer Pointer Controller')
     required = parser.add_argument_group('required arguments')
 
-    # required.add_argument('-m_fd', type=str, required=True, default=m_fd, help='Path to a trained model for face detection')
-    required.add_argument('-m_fd', type=str, default=m_fd, help='Path to a trained model for face detection')
-    required.add_argument('-m_hpe', type=str, default=m_hpe, help='Path to a trained model for head pose estimation')
-    required.add_argument('-m_ld', type=str, default=m_ld, help='Path to a trained model for facial landmark detection')
-    required.add_argument('-m_ge', type=str, default=m_ge, help='Path to a trained model for gaze estimation')
-    required.add_argument('-i', type=str, default=input_stream, help='Path to image or video file, otherwise specify \'cam\' for live feed')
-    required.add_argument('-d', type=str, default='CPU', help='Specify the target device to infer on: CPU, GPU, FPGA or MYRIAD is acceptable. Sample will look for a suitable plugin for device specified (CPU by default)')
-    required.add_argument('-pt', type=float, default=0.65, help='Probablity threshold for face detection')
-    required.add_argument('-v', type=str2bool, default=False, help='Visualization flag - set to no display by default, to set display frames, specify \'t\' or \'yes\' or \'true\' or \'1\'')
-    parser.add_argument('-cpu_ext', type=str, default=None, help='MKLDNN (CPU)-targeted custom layers. Absolute path to a shared library with the kernels impl.')
+    required.add_argument('-m_fd', type=str, required=True, default=m_fd, help='Path to a trained model for face detection')
+    required.add_argument('-m_hpe', type=str, required=True, default=m_hpe, help='Path to a trained model for head pose estimation')
+    required.add_argument('-m_ld', type=str, required=True, default=m_ld, help='Path to a trained model for facial landmark detection')
+    required.add_argument('-m_ge', type=str, required=True, default=m_ge, help='Path to a trained model for gaze estimation')
+    required.add_argument('-i', type=str, required=True, default=input_stream, help='Path to image or video file, otherwise specify \'cam\' for live feed')
+    required.add_argument('-d', type=str, required=False, default='CPU', help='Specify the target device to infer on: CPU, GPU, FPGA or MYRIAD is acceptable. Sample will look for a suitable plugin for device specified (CPU by default)')
+    required.add_argument('-pt', type=float, required=False, default=0.65, help='Probablity threshold for face detection')
+    required.add_argument('-v', type=str2bool, required=False, default=False, help='Visualization flag - set to no display by default, to set display frames, specify \'t\' or \'yes\' or \'true\' or \'1\'')
+    parser.add_argument('-cpu_ext', type=str, required=False, default=None, help='MKLDNN (CPU)-targeted custom layers. Absolute path to a shared library with the kernels impl.')
     return parser
 
 def str2bool(v):
@@ -97,7 +96,6 @@ def pipeline(args):
 
         inf_time = time.time()
         hpe_output = HeadPoseEstimationPipe.predict(fd_img_output)
-        log.info([hpe_output])
         inf_time_hpe = time.time() - inf_time
 
         yaw, pitch, roll = hpe_output
