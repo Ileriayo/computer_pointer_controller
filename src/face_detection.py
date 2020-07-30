@@ -10,7 +10,7 @@ class FaceDetection:
     '''
     Class for the Face Detection Model.
     '''
-    def __init__(self, model_name, device='CPU', extensions=None):
+    def __init__(self, model_name, prob_threshold, device='CPU', extensions=None):
         '''
         TODO: Use this to set your instance variables.
         '''
@@ -18,6 +18,7 @@ class FaceDetection:
         self.model_xml = model_name + '.xml'
         self.device = device
         self.cpu_extension = extensions
+        self.prob_threshold = prob_threshold
 
         try:
             self.ie_plugin = IECore()
@@ -28,7 +29,6 @@ class FaceDetection:
         self.input_name=next(iter(self.model.inputs))
         self.input_shape=self.model.inputs[self.input_name].shape
         self.output_name=next(iter(self.model.outputs))
-        # self.output_shape=self.model.outputs[self.output_name].shape
 
     def load_model(self):
         '''
@@ -69,9 +69,8 @@ class FaceDetection:
         
         if self.wait() == 0:
             outputs = self.get_outputs()
-            image = self.preprocess_output(outputs, image)
-        # cv2.imwrite('../images/outputs/cropped_face.jpg', image)
-        return image
+            image, coords = self.preprocess_output(outputs, image)
+        return image, coords
 
     def preprocess_input(self, image):
         '''
@@ -99,13 +98,17 @@ class FaceDetection:
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
+        coords = []
         for obj in outputs[0][0]:
             conf = obj[2]
-            if conf >= 0.65:
+            if conf >= self.prob_threshold:
                 x_min = int(obj[3] * image.shape[1])
                 y_min = int(obj[4] * image.shape[0])
                 x_max = int(obj[5] * image.shape[1])
                 y_max = int(obj[6] * image.shape[0])
                 image = image[y_min:y_max, x_min:x_max]
-                # cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (0, 0, 255), 1)
-        return image
+                coords.append(x_min)
+                coords.append(y_min)
+                coords.append(x_max)
+                coords.append(y_max)
+        return image, coords

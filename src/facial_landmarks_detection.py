@@ -28,7 +28,6 @@ class FacialLandmarks:
         self.input_name=next(iter(self.model.inputs))
         self.input_shape=self.model.inputs[self.input_name].shape
         self.output_name=next(iter(self.model.outputs))
-        # self.output_shape=self.model.outputs[self.output_name].shape
 
     def load_model(self):
         '''
@@ -70,10 +69,7 @@ class FacialLandmarks:
         
         if self.wait() == 0:
             outputs = self.get_outputs()
-            left_eye, right_eye = self.preprocess_output(outputs, image)
-        # cv2.imwrite('../images/outputs/left_eye.jpg', left_eye)
-        # cv2.imwrite('../images/outputs/right_eye.jpg', right_eye)
-        return left_eye, right_eye
+        return self.preprocess_output(outputs, image)
 
     def preprocess_input(self, image):
         '''
@@ -119,12 +115,14 @@ class FacialLandmarks:
         xrmax = xr + 15
         yrmax = yr + 15
 
-        # draw boxes around eyes
-        # cv2.rectangle(image, (xlmin, ylmin), (xlmax, ylmax), (0, 0, 255), 1)
-        # cv2.rectangle(image, (xrmin, yrmin), (xrmax, yrmax), (0, 0, 255), 1)
+        coords = []
+        coords.append((xlmin, ylmin))
+        coords.append((xlmax, ylmax))
+        coords.append((xrmin, yrmin))
+        coords.append((xrmax, yrmax))
 
         # crop eyes
         eye_l = image[ylmin:ylmax, xlmin:xlmax]
         eye_r = image[yrmin:yrmax, xrmin:xrmax]
 
-        return eye_l, eye_r
+        return eye_l, eye_r, coords
