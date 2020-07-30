@@ -3,3 +3,5 @@ models/
 src/__pycache__
 images/outputs/
 sample/
+.vscode
+venv/
